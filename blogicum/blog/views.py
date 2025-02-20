@@ -13,60 +13,61 @@ from .models import Post, Category, Comment, User
 NUMBER_OF_PAGINATOR_PAGES = 10
 
 
-def index(request) -> HttpResponse:
-    """Главная страница."""
-    current_time = timezone.now()
-    posts = Post.objects.filter(
-        pub_date__lte=current_time,
-        is_published=True,
-        category__is_published=True
-    ).order_by('-pub_date')[:5]
-
-    context = {'post_list': posts}
-    return render(request, 'blog/index.html', context)
-
-
-def post_detail(request, id) -> HttpResponse:
-    """Отдельный пост."""
-    if id is None:
-        raise Http404("Публикация не найдена или недоступна.")
-    current_time = timezone.now()
-    post = get_object_or_404(Post, pk=id)
-
-    # Проверка условий для отображения публикации
-    if (post.pub_date > current_time or not post.is_published
-            or (post.category and not post.category.is_published)):
-        raise Http404("Публикация не найдена или недоступна.")
-
-    context = {'post': post}
-    return render(request, 'blog/detail.html', context)
-
-
-def category_posts(request, category_slug) -> HttpResponse:
-    """Категория постов"""
-    current_time = timezone.now()
-    category = get_object_or_404(Category,
-                                 slug=category_slug,
-                                 is_published=True)
-
-    posts = Post.objects.filter(
-        category=category,
-        pub_date__lte=current_time,
-        is_published=True
-    ).order_by('-pub_date')
-
-    context = {'category': category, 'posts': posts}
-    return render(request, 'blog/category.html', context)
-
-
 def get_posts(**kwargs):
-    """Отфильтрованное получение постов"""
+    """Вспомогательная функция получения постов"""
     return Post.objects.select_related(
         'category',
         'location',
         'author'
     ).annotate(comment_count=Count('comments')
                ).filter(**kwargs).order_by('-pub_date')
+
+
+def index(request) -> HttpResponse:
+    """Главная страница с постами"""
+    posts = get_posts(
+        is_published=True,
+        category__is_published=True,
+        pub_date__lte=datetime.now())
+    page_obj = get_paginator(request, posts)
+    context = {'page_obj': page_obj}
+    return render(request, 'blog/index.html', context)
+
+
+def post_detail(request, post_id):
+    """Полная информация о посте"""
+    post = get_object_or_404(Post, id=post_id)
+    if request.user != post.author:
+        post = get_object_or_404(
+            Post,
+            id=post_id,
+            is_published=True,
+            category__is_published=True,
+            pub_date__lte=datetime.now())
+    form = CommentForm(request.POST or None)
+    comments = Comment.objects.select_related(
+        'author').filter(post=post)
+    context = {'post': post,
+               'form': form,
+               'comments': comments}
+    return render(request, 'blog/detail.html', context)
+
+
+def category_posts(request, category_slug):
+    """Отображение публикаций в категории"""
+    category = get_object_or_404(
+        Category,
+        slug=category_slug,
+        is_published=True)
+    posts = get_posts(
+        is_published=True,
+        category__is_published=True,
+        pub_date__lte=datetime.now(),
+        category=category)
+    page_obj = get_paginator(request, posts)
+    context = {'category': category,
+               'page_obj': page_obj}
+    return render(request, 'blog/category.html', context)
 
 
 def get_paginator(request, queryset,
