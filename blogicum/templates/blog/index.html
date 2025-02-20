@@ -5,8 +5,8 @@
 {% block content %}
   {% for post in page_obj %}
     <article class="mb-5">
-      {% include "includes/../includes/post_card.html" %}
+      {% include "includes/post_card.html" %}
     </article>
   {% endfor %}
-  {% include "includes/../includes/paginator.html" %}
+  {% include "includes/paginator.html" %}
 {% endblock %}
