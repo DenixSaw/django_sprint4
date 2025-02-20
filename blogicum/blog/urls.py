@@ -33,5 +33,6 @@ urlpatterns: list = [
     path('category/<slug:category_slug>/', views.category_posts,
          name='category_posts'),
     path('posts/', include(post_urls)),
-    path('profile/', include(profile_urls))
+    path('profile/', include(profile_urls)),
+    path('auth/logout/', views.logout_view, name='logout'),
 ]

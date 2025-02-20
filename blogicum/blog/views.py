@@ -1,3 +1,4 @@
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count
@@ -10,6 +11,9 @@ from .models import Post, Category, Comment, User
 
 NUMBER_OF_PAGINATOR_PAGES = 10
 
+def logout_view(request):
+    logout(request)  # Выход из сессии
+    return redirect('/')
 
 def get_posts(**kwargs):
     """Вспомогательная функция получения постов"""

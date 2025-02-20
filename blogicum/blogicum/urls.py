@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.contrib.auth.forms import UserCreationForm
 from django.views.generic.edit import CreateView
+from django.contrib.auth.views import LogoutView
 from django.conf.urls.static import static
 from django.urls import reverse_lazy
 from django.conf import settings
