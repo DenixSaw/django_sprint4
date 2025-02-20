@@ -76,25 +76,6 @@ def get_paginator(request, queryset,
     return paginator.get_page(page_number)
 
 
-def post_detail(request, post_id):
-    """Отображение деталей поста"""
-    post = get_object_or_404(Post, id=post_id)
-    if request.user != post.author:
-        post = get_object_or_404(
-            Post,
-            id=post_id,
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=datetime.now())
-    form = CommentForm(request.POST or None)
-    comments = Comment.objects.select_related(
-        'author').filter(post=post)
-    context = {'post': post,
-               'form': form,
-               'comments': comments}
-    return render(request, 'blog/post_detail.html', context)
-
-
 @login_required
 def create_post(request):
     """Создание поста"""
